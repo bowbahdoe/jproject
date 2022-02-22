@@ -1,0 +1,11 @@
+[application]
+main-class = "dev.mccue.example.Main"
+release="17"
+
+[dependencies]
+
+[test-only-dependencies]
+
+[runtime-only-dependencies]
+
+[compile-only-dependencies]

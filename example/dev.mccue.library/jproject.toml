@@ -1,0 +1,11 @@
+[library]
+release="17"
+
+[dependencies]
+
+[test-only-dependencies]
+"org.junit.jupiter/junit-jupiter-api" = "5.8.2"
+
+[runtime-only-dependencies]
+
+[compile-only-dependencies]
