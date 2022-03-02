@@ -1,92 +1,104 @@
 package dev.mccue.jproject;
 
+import dev.mccue.jproject.model.ApplicationModule;
+
 /**
  * build.xml to funnel to Ant.
  */
 public final class BuildXml {
 
-    public BuildXml() {}
+    private BuildXml() {}
 
-
-    public String contents() {
+    public static String contents(ApplicationModule applicationModule) {
         // language=xml
         return """
-        <project xmlns:ivy="antlib:org.apache.ivy.ant">
-            <property name="src.dir"     value="src"/>
-            <property name="build.dir"   value="build"/>
+        <project xmlns:ivy="antlib:org.apache.ivy.ant" xmlns:jacoco="antlib:org.jacoco.ant">
+            <property name="src.dir"     value="%s"/>
+            <property name="build.dir"   value="%s"/>
+            <property name="lib.dir" value="%s"/>
             <property name="classes.dir" value="${build.dir}/classes"/>
             <property name="jar.dir"     value="${build.dir}/jar"/>
         
-            <property name="main-class"  value="oata.HelloWorld"/>
-         
-            <!-- Initialize Dependency Management -->
-            <property name="ivy.install.version" value="2.4.0" />
-        
-            <condition property="ivy.home" value="${env.IVY_HOME}">
-                <isset property="env.IVY_HOME" />
-            </condition>
-            <property name="ivy.home" value="${user.home}/.ant" />
-            <property name="ivy.jar.dir" value="${ivy.home}/lib" />
-            <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar" />
-        
-            <target name="download-ivy" unless="offline">
-                <mkdir dir="${ivy.jar.dir}" />
-                <get src="https://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar"
-                     dest="${ivy.jar.file}" usetimestamp="true" />
-            </target>
-        
-            <target name="init-ivy" depends="download-ivy">
-                <path id="ivy.lib.path">
-                    <fileset dir="${ivy.jar.dir}" includes="*.jar"/>
-                </path>
-                <taskdef resource="org/apache/ivy/ant/antlib.xml"
-                         uri="antlib:org.apache.ivy.ant"
-                         classpathref="ivy.lib.path"/>
-            </target>
+            <property name="main-class"  value="%s"/>
         
             <target name="clean">
                 <delete dir="${build.dir}"/>
             </target>
             
-            <target name="re">
-                <echo message='javac -g -h'/>
-                <ivy:retrieve />
+            <target name="tree">
                 <ivy:dependencytree />
             </target>
+            
+            <target name="ensure-deps">
+                <ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]"
+                              sync="true" />
+                              
+                <mkdir dir="${lib.dir}/default" />
+                <mkdir dir="${lib.dir}/test" />
+                <mkdir dir="${lib.dir}/compile" />
+                <mkdir dir="${lib.dir}/runtime" />
+                              
+                <path id="default.modulepath">
+                    <fileset dir="${lib.dir}/default" includes="*.jar"/>
+                </path>
+                
+                <path id="test.modulepath">
+                    <path refid="default.modulepath"/>
+                    <fileset dir="${lib.dir}/test" includes="*.jar"/>
+                </path>
+                
+                <path id="compile.modulepath">
+                    <path refid="default.modulepath"/>
+                    <fileset dir="${lib.dir}/compile" includes="*.jar"/>
+                </path>
+                
+                <path id="runtime.modulepath">
+                    <path refid="default.modulepath"/>
+                    <fileset dir="${lib.dir}/runtime" includes="*.jar"/>
+                    <fileset dir="${jar.dir}" includes="*.jar"/>
+                </path>
+            </target>
         
-            <target name="compile">
-                <ivy:retrieve />
+            <target name="compile" depends="ensure-deps">
                 <mkdir dir="${classes.dir}"/>
-                <javac modulesourcepath="."
+                <javac srcdir="${src.dir}"
+                       modulepathref="compile.modulepath"
+                       debug="true"
                        destdir="${classes.dir}"
                        includeantruntime="false"
                        release="17"
                 />
-        
-                <echo message="copy-non-java,${classes.dir},../dest/dir"></echo>
-                <copy todir="../dest/dir">
-                    <fileset dir="${classes.dir}" excludes="**/*.java"/>
+                <copy todir="${classes.dir}">
+                    <fileset dir="${src.dir}" excludes="**/*.java"/>
                 </copy>
             </target>
-        
+       
             <target name="jar" depends="compile">
                 <mkdir dir="${jar.dir}"/>
-                <jar destfile="${jar.dir}/${ant.project.name}.jar" basedir="${classes.dir}">
-                    <manifest>
-                        <attribute name="Main-Class" value="${main-class}"/>
-                    </manifest>
-                </jar>
+                <exec executable="jar">
+                    <arg value="--create"/>
+                    <arg value="--file"/>
+                    <arg value="${jar.dir}/application.jar"/>
+                    <arg value="--main-class"/>
+                    <arg value="${main-class}"/>
+                    <arg value="-C"/>
+                    <arg value="${classes.dir}"/>
+                    <arg value="."/>
+                </exec>
             </target>
-        
-            <target name="run" depends="jar">
-                <java jar="${jar.dir}/${ant.project.name}.jar" fork="true"/>
+            
+            <target name="run" depends="clean,jar">
+                <java modulepathref="runtime.modulepath"
+                      module="dev.mccue.example"
+                      fork="true"/>
             </target>
-        
-            <target name="clean-build" depends="clean,jar"/>
-        
-            <target name="main" depends="clean,run"/>
-        
         </project>
-        """;
+        """.formatted(
+                Conventions.SRC_DIR,
+                Conventions.TARGET_DIR,
+                Conventions.DEPENDENCIES_PATH,
+                applicationModule.mainClass()
+        );
+
     }
 }
