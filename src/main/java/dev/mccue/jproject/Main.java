@@ -14,8 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.spi.ToolProvider;
 
-import static dev.mccue.jproject.Conventions.GOOGLE_JAVA_FORMAT_PATH;
-import static dev.mccue.jproject.Conventions.JUNIT_RUNNER_PATH;
+import static dev.mccue.jproject.Conventions.*;
 
 public final class Main {
 
@@ -141,12 +140,25 @@ public final class Main {
 
                 // Formats code
                 case "fmt" -> {
-                    runCommand(List.of(
+                    var formatCommand = new ArrayList<>(List.of(
                             "java",
+                            "--add-exports", "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+                            "--add-exports", "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
+                            "--add-exports", "jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED",
+                            "--add-exports", "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
+                            "--add-exports", "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
                             "-jar",
                             GOOGLE_JAVA_FORMAT_PATH.toString(),
+                            "--aosp",
                             "-r"
                     ));
+                    FileUtils.listFiles(SRC_DIR.toFile(), new String[] { "java" }, true).forEach(file ->
+                            formatCommand.add(file.toString())
+                    );
+                    FileUtils.listFiles(TEST_DIR.toFile(), new String[] { "java" }, true).forEach(file ->
+                            formatCommand.add(file.toString())
+                    );
+                    runCommand(formatCommand);
                 }
                 // Clean all cached resources
                 case "clean" -> {
