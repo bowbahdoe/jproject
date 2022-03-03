@@ -8,10 +8,10 @@ import org.apache.commons.io.filefilter.SuffixFileFilter;
 
 import java.io.IOException;
 import java.lang.module.ModuleFinder;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.spi.ToolProvider;
 
 import static dev.mccue.jproject.Conventions.*;
@@ -94,6 +94,94 @@ public final class Main {
         );
     }
 
+    private static void newProject() throws Exception {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("primary module name: ");
+        var projectName = scanner.next();
+
+
+        var projectDirectory = Path.of(projectName);
+        try {
+            Files.createDirectory(projectDirectory);
+        } catch (FileAlreadyExistsException __) {
+            System.err.println("directory already exists");
+            System.exit(1);
+        }
+
+        Files.writeString(Path.of(projectDirectory.toString(), "jproject.toml"), """
+                [application]
+                main-class = "%s.Main"
+                                
+                [dependencies]
+                                
+                [test-only-dependencies]
+                "org.junit.jupiter/junit-jupiter-api" = "5.8.2"
+                                
+                [runtime-only-dependencies]
+                                
+                [compile-only-dependencies]
+                """.formatted(projectName),
+                StandardOpenOption.CREATE_NEW
+        );
+
+        var srcDirectory = Path.of(projectDirectory.toString(), "src");
+        Files.createDirectory(srcDirectory);
+        Files.writeString(Path.of(srcDirectory.toString(), "module-info.java"), """
+                module %s {
+                    requires org.junit.jupiter.api;
+                }
+                """.formatted(projectName),
+                StandardOpenOption.CREATE_NEW
+        );
+
+        var paths = projectName.split("\\.");
+        var main = Path.of(Path.of(srcDirectory.toString(), paths).toString(), "Main.java");
+        main.getParent().toFile().mkdirs();
+        Files.writeString(
+                main, """
+                package %s;
+                
+                public final class Main {
+                    private Main() {}
+                    
+                    public static void main(String[] args) {
+                        System.out.println("Hello, world");
+                    }
+                }
+                """.formatted(projectName),
+                StandardOpenOption.CREATE_NEW
+        );
+
+        var testDirectory = Path.of(projectDirectory.toString(), "test");
+        Files.createDirectory(testDirectory);
+        Files.writeString(Path.of(testDirectory.toString(), "module-info.java"), """
+                module %s {
+                    requires org.junit.jupiter.api;
+                }
+                """.formatted(projectName),
+                StandardOpenOption.CREATE_NEW
+        );
+
+
+        var test = Path.of(Path.of(testDirectory.toString(), paths).toString(), "BasicTest.java");
+        test.getParent().toFile().mkdirs();
+        Files.writeString(test, """
+                package %s;
+                
+                import org.junit.jupiter.api.Test;
+                
+                import static org.junit.jupiter.api.Assertions.assertEquals;
+                
+                public final class BasicTest {
+                    @Test
+                    public void basicTest() {
+                        assertEquals(1 + 1, 2);
+                    }
+                }
+                """.formatted(projectName),
+                StandardOpenOption.CREATE_NEW
+        );
+    }
     private static void compileTest(ApplicationModule project) throws Exception {
         var javacArgs = new ArrayList<>(List.of(
                 "-g", // Generates debug symbols. Should always do this
@@ -123,7 +211,6 @@ public final class Main {
             System.exit(1);
         }
 
-
         // Load in info from said file
         var project = ApplicationModule.fromFile(
                 Conventions.JPROJECT_TOML_PATH
@@ -136,7 +223,9 @@ public final class Main {
             var subcommand = args[0];
             switch (subcommand) {
                 // Create a new project
-                case "new" -> {}
+                case "new" -> {
+                    newProject();
+                }
 
                 // Formats code
                 case "fmt" -> {
@@ -160,6 +249,7 @@ public final class Main {
                     );
                     runCommand(formatCommand);
                 }
+
                 // Clean all cached resources
                 case "clean" -> {
                     clean();
@@ -203,7 +293,6 @@ public final class Main {
 
                     runCommand(List.of(
                             "java",
-                            "--patch-module", moduleName + "=" + Conventions.TEST_CLASSES_DIR,
                             "--add-reads", moduleName + "=ALL-UNNAMED",
                             "--add-opens", moduleName + "/" + moduleName + "=ALL-UNNAMED",
                             "--module-path",

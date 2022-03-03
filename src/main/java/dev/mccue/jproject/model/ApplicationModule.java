@@ -1,7 +1,6 @@
 package dev.mccue.jproject.model;
 
 import com.moandjiezana.toml.Toml;
-import dev.mccue.jproject.IvyXml;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -13,10 +12,10 @@ public record ApplicationModule(String mainClass, Map<MavenDependency, EnumSet<D
         var toml = new Toml();
         toml.read(file.toFile());
 
-        if (!toml.containsTable("application")) {
-            throw new ConstructionException("Missing [application]");
+        if (!toml.containsTable("module")) {
+            throw new ConstructionException("Missing [module]");
         }
-        var application = toml.getTable("application");
+        var application = toml.getTable("module");
 
         final String mainClass;
         try {
