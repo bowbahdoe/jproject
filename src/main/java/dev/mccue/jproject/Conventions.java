@@ -23,22 +23,29 @@ public final class Conventions {
     public static final Path TARGET_DIR = Path.of("target");
 
     /**
+     *
+     */
+    public static final Path CLASSES_DIR = Path.of(TARGET_DIR.toString(), "classes");
+
+    /**
+     *
+     */
+    public static final Path TEST_CLASSES_DIR = Path.of(TARGET_DIR.toString(), "test", "classes");
+
+
+    /**
+     *
+     */
+    public static final Path JAR_DIR = Path.of(TARGET_DIR.toString(), "jar");
+
+
+    /**
      * The directory where any tool specific files will be stored.
      */
     public static final Path TOOL_DIRECTORY = Path.of(
             System.getProperty("user.home"),
             "/.jproject/"
     );
-
-    /**
-     * The path where the pre-packaged installation of Apache Ant will be expanded.
-     */
-    public static final Path ANT_DIRECTORY = Path.of(TOOL_DIRECTORY.toString(), "/ant/");
-
-    /**
-     * The path where the pre-packaged installation of Apache Ivy will be expanded.
-     */
-    public static final Path IVY_DIRECTORY = Path.of(TOOL_DIRECTORY.toString(), "/ivy/");
 
     /**
      * The path where the pre-packaged JUnit test runner jar will be expanded.
@@ -59,9 +66,9 @@ public final class Conventions {
     /**
      * The path where the pre-packaged Jacoco ant plugin will be placed.
      */
-    public static final Path JACOCO_ANT_PATH = Path.of(
+    public static final Path JACOCO_AGENT_PATH = Path.of(
             TOOL_DIRECTORY.toString(),
-            "org.jacoco.ant-0.8.7.jar"
+            "org.jacoco.agent-0.8.7.jar"
     );
 
     /**

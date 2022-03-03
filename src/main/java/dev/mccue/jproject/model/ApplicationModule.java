@@ -4,10 +4,7 @@ import com.moandjiezana.toml.Toml;
 import dev.mccue.jproject.IvyXml;
 
 import java.nio.file.Path;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -81,6 +78,56 @@ public record ApplicationModule(String mainClass, Map<MavenDependency, EnumSet<D
 
         return new ApplicationModule(mainClass, dependencyMap);
     }
+
+    public List<MavenDependency> runtimeDependencies() {
+        var deps = new ArrayList<MavenDependency>();
+        this.deps().forEach((dep, scopes) -> {
+            if (scopes.contains(DependencyScope.RUNTIME) || scopes.contains(DependencyScope.ALL)) {
+                deps.add(dep);
+            }
+        });
+        return deps;
+    }
+
+    public List<MavenDependency> testCompileDependencies() {
+        var deps = new ArrayList<MavenDependency>();
+        this.deps().forEach((dep, scopes) -> {
+            if (scopes.contains(DependencyScope.COMPILE) ||
+                    scopes.contains(DependencyScope.TEST) ||
+                    scopes.contains(DependencyScope.ALL)
+            ) {
+                deps.add(dep);
+            }
+        });
+        return deps;
+    }
+
+    public List<MavenDependency> testRuntimeDependencies() {
+        var deps = new ArrayList<MavenDependency>();
+        this.deps().forEach((dep, scopes) -> {
+            if (scopes.contains(DependencyScope.RUNTIME) ||
+                    scopes.contains(DependencyScope.TEST) ||
+                    scopes.contains(DependencyScope.ALL)
+            ) {
+                deps.add(dep);
+            }
+        });
+        return deps;
+    }
+
+    public List<MavenDependency> compileDependencies() {
+        var deps = new ArrayList<MavenDependency>();
+        this.deps().forEach((dep, scopes) -> {
+            if (scopes.contains(DependencyScope.COMPILE) ||
+                    scopes.contains(DependencyScope.ALL)
+            ) {
+                deps.add(dep);
+            }
+        });
+        return deps;
+    }
+
+
 
     public static final class ConstructionException extends Exception {
         private ConstructionException(String msg) {
