@@ -1,6 +1,9 @@
 package dev.mccue.jproject;
 
+import dev.mccue.jproject.model.MavenDependency;
+
 import java.nio.file.Path;
+import java.util.List;
 
 public final class Conventions {
     private Conventions() {}
@@ -18,27 +21,43 @@ public final class Conventions {
     public static final Path TEST_DIR = Path.of("test");
 
     /**
+     * The directory where source code and resources for
+     * the application's benchmarks are stored
+     */
+    public static final Path BENCH_DIR = Path.of("bench");
+
+    /**
      * The root directory to use for the output of build steps.
      */
     public static final Path TARGET_DIR = Path.of("target");
 
     /**
-     *
+     * The directory to put classes that came from "src"
      */
-    public static final Path CLASSES_DIR = Path.of(TARGET_DIR.toString(), "classes");
+    public static final Path SRC_CLASSES_DIR = Path.of(TARGET_DIR.toString(), "src", "classes");
 
     /**
-     *
+     * The directory to put classes that came from "test"
      */
     public static final Path TEST_CLASSES_DIR = Path.of(TARGET_DIR.toString(), "test", "classes");
 
+    /**
+     * The directory to put classes that came from "bench"
+     */
+    public static final Path BENCH_CLASSES_DIR = Path.of(TARGET_DIR.toString(), "test", "bench");
 
     /**
      *
      */
     public static final Path JAR_DIR = Path.of(TARGET_DIR.toString(), "jar");
 
+    public static final Path NORMAL_JAR_FILE = Path.of(JAR_DIR.toString(), "app.jar");
 
+
+    public static final Path TEST_JAR_FILE = Path.of(JAR_DIR.toString(), "test.jar");
+
+
+    public static final Path BENCH_JAR_FILE = Path.of(JAR_DIR.toString(), "bench.jar");
     /**
      * The directory where any tool specific files will be stored.
      */
@@ -53,6 +72,30 @@ public final class Conventions {
     public static final Path JUNIT_RUNNER_PATH = Path.of(
             TOOL_DIRECTORY.toString(),
             "junit-platform-console-standalone-1.8.2.jar"
+    );
+
+    public static final List<MavenDependency> JUNIT_RUNNER_DEPENDENCIES = List.of(
+            new MavenDependency(
+                    "org.junit.platform",
+                    "junit-platform-console",
+                    "1.8.2"
+            )
+    );
+
+    public static final List<MavenDependency> GOOGLE_JAVA_FORMAT_DEPENDENCIES = List.of(
+            new MavenDependency(
+                    "com.google.googlejavaformat",
+                    "google-java-format",
+                    "1.13.0"
+            )
+    );
+
+    public static final List<MavenDependency> JACOCO_AGENT_DEPENDENCIES = List.of(
+            new MavenDependency(
+                    "com.google.googlejavaformat",
+                    "google-java-format",
+                    "1.13.0"
+            )
     );
 
     /**

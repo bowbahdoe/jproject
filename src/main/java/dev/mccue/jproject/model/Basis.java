@@ -106,6 +106,10 @@ public final class Basis {
         return new Builder();
     }
 
+    public static Builder usingMavenCentral() {
+        return new Builder().addRepository(MavenRepository.MAVEN_CENTRAL);
+    }
+
     static final class Requires {
         static final IFn KEYWORD;
         static final IFn SYMBOL;
