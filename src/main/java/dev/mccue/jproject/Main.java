@@ -74,7 +74,8 @@ public final class Main {
                 "--processor-module-path", path,
                 "--add-modules",
                 "ALL-MODULE-PATH",
-                "-d", SRC_CLASSES_DIR.toString()
+                "-d", SRC_CLASSES_DIR.toString(),
+                "-s", SRC_GENERATED_SOURCES_DIR.toString()
         ));
 
         FileUtils
@@ -166,6 +167,10 @@ public final class Main {
 
         var benchDirectory = Path.of(projectDirectory.toString(), "bench");
         Files.createDirectory(benchDirectory);
+
+        new ProcessBuilder("git", "init")
+                .directory(projectDirectory.toFile())
+                .start();
     }
     private static void compileTest(ApplicationModule project) throws Exception {
         var path = Basis.usingMavenCentral()
@@ -187,7 +192,8 @@ public final class Main {
                 path,
                 "--add-modules",
                 "ALL-MODULE-PATH",
-                "-d", Conventions.TEST_CLASSES_DIR.toString()
+                "-d", Conventions.TEST_CLASSES_DIR.toString(),
+                "-s", TEST_GENERATED_SOURCES_DIR.toString()
         ));
 
         FileUtils
@@ -216,7 +222,9 @@ public final class Main {
                 path,
                 "--add-modules",
                 "ALL-MODULE-PATH",
-                "-d", BENCH_CLASSES_DIR.toString()
+                "-d", BENCH_CLASSES_DIR.toString(),
+
+                "-s", BENCH_GENERATED_SOURCES_DIR.toString()
         ));
 
         FileUtils

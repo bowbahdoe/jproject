@@ -37,14 +37,29 @@ public final class Conventions {
     public static final Path SRC_CLASSES_DIR = Path.of(TARGET_DIR.toString(), "src", "classes");
 
     /**
+     * The directory to put classes that came from "src"
+     */
+    public static final Path SRC_GENERATED_SOURCES_DIR = Path.of(TARGET_DIR.toString(), "src", "generated-sources");
+
+    /**
      * The directory to put classes that came from "test"
      */
     public static final Path TEST_CLASSES_DIR = Path.of(TARGET_DIR.toString(), "test", "classes");
 
     /**
+     * The directory to put classes that came from "src"
+     */
+    public static final Path TEST_GENERATED_SOURCES_DIR = Path.of(TARGET_DIR.toString(), "test", "generated-sources");
+
+    /**
      * The directory to put classes that came from "bench"
      */
     public static final Path BENCH_CLASSES_DIR = Path.of(TARGET_DIR.toString(), "test", "bench");
+
+    /**
+     * The directory to put classes that came from "src"
+     */
+    public static final Path BENCH_GENERATED_SOURCES_DIR = Path.of(TARGET_DIR.toString(), "test", "bench", "generated-sources");
 
     /**
      *

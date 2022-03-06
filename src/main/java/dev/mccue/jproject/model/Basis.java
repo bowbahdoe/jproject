@@ -3,23 +3,60 @@ package dev.mccue.jproject.model;
 import clojure.java.api.Clojure;
 import clojure.lang.IFn;
 
+import java.io.*;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+
 import static dev.mccue.jproject.model.Basis.Requires.*;
 
 /**
  * A "basis" is the set of dependencies and flags to use when constructing
  * a JVM runtime.
  */
-public final class Basis {
+public final class Basis implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1;
+
     private final List<String> jvmArgs;
     private final Object deps;
     private final Object repos;
     private final List<Path> paths;
 
-    private Basis(Builder builder) {
+    private record SerializationProxy(
+            List<String> jvmArgs,
+            Object deps,
+            Object repos,
+            List<String> paths
+    ) implements Serializable {
+        @Serial
+        private static final long serialVersionUID = 1;
 
+        @Serial
+        Object readResolve() throws ObjectStreamException {
+            return new Basis(this);
+        }
+    }
+
+    @Serial
+    Object writeReplace() throws ObjectStreamException {
+        return new SerializationProxy(
+                this.jvmArgs,
+                this.deps,
+                this.repos,
+                this.paths.stream().map(Path::toString).toList()
+        );
+    }
+
+    private Basis(SerializationProxy serializationProxy) {
+        this.jvmArgs = serializationProxy.jvmArgs();
+        this.deps = serializationProxy.deps();
+        this.repos = serializationProxy.repos();
+        this.paths = serializationProxy.paths().stream()
+                .map(Path::of)
+                .toList();
+    }
+
+    private Basis(Builder builder) {
         var deps = HASH_MAP.invoke();
         for (var dependency : builder.dependencies) {
             var coord = SYMBOL.invoke(
@@ -67,17 +104,46 @@ public final class Basis {
      * the classpath and/or modulepath at startup.
      */
     public String path() {
-        return (String) MAKE_CLASSPATH.invoke(
-                RESOLVE_DEPS.invoke(
-                        HASH_MAP.invoke(
-                                KEYWORD.invoke("deps"), this.deps,
-                                 KEYWORD.invoke("mvn/repos"), this.repos
-                        ),
-                        HASH_MAP.invoke()
-                ),
-                VEC.invoke(this.paths.stream().map(Path::toString).toList()),
-                null
-        );
+        var cachePath = Path.of(".path-cache");
+        Map<?, ?> cacheMap = null;
+        try (var fis = new FileInputStream(cachePath.toFile());
+             var ois = new ObjectInputStream(fis)) {
+            cacheMap = (Map<?, ?>) ois.readObject();
+        } catch (FileNotFoundException e) {
+            // noop
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+        if (cacheMap != null &&  cacheMap.get(this) instanceof String path) {
+            return path;
+        }
+        else {
+            var path = (String) MAKE_CLASSPATH.invoke(
+                    RESOLVE_DEPS.invoke(
+                            HASH_MAP.invoke(
+                                    KEYWORD.invoke("deps"), this.deps,
+                                    KEYWORD.invoke("mvn/repos"), this.repos
+                            ),
+                            HASH_MAP.invoke()
+                    ),
+                    VEC.invoke(this.paths.stream().map(Path::toString).toList()),
+                    null
+            );
+            var newCacheMap = cacheMap == null ?
+                    new HashMap<>() :
+                    new HashMap<Object, Object>(cacheMap);
+            newCacheMap.put(this, path);
+            try (var fos = new FileOutputStream(cachePath.toFile());
+                 var oos = new ObjectOutputStream(fos)) {
+                oos.writeObject(newCacheMap);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+            return path;
+        }
     }
 
     /**
@@ -181,5 +247,22 @@ public final class Basis {
         public Basis build() {
             return new Basis(this);
         }
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Basis basis = (Basis) o;
+        return Objects.equals(jvmArgs, basis.jvmArgs)
+                && Objects.equals(deps, basis.deps)
+                && Objects.equals(repos, basis.repos)
+                && Objects.equals(paths, basis.paths);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(jvmArgs, deps, repos, paths);
     }
 }
