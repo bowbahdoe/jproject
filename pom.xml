@@ -12,13 +12,34 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.10.0</version>
                 <configuration>
                     <source>17</source>
                     <target>17</target>
-                    <compilerArgs>--enable-preview</compilerArgs>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>dev.mccue.jproject.Main</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
+
     </build>
 
     <properties>
@@ -33,7 +54,7 @@
             <version>0.7.2</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.commons</groupId>
+            <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>2.11.0</version>
         </dependency>

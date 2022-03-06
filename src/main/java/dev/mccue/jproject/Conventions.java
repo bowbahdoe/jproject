@@ -90,14 +90,6 @@ public final class Conventions {
             )
     );
 
-    public static final List<MavenDependency> JACOCO_AGENT_DEPENDENCIES = List.of(
-            new MavenDependency(
-                    "com.google.googlejavaformat",
-                    "google-java-format",
-                    "1.13.0"
-            )
-    );
-
     /**
      * The path where the pre-packaged JUnit test runner jar will be expanded.
      */

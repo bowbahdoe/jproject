@@ -1,3 +1,0 @@
-module dev.mccue.example {
-
-}

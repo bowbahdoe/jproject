@@ -7,15 +7,15 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public record ApplicationModule(String mainClass, Map<MavenDependency, EnumSet<DependencyScope>> deps) {
+public record ApplicationModule(String mainClass, Map<AvailableDuring, List<MavenDependency>> deps) {
     public static ApplicationModule fromFile(Path file) throws ConstructionException {
         var toml = new Toml();
         toml.read(file.toFile());
 
-        if (!toml.containsTable("module")) {
-            throw new ConstructionException("Missing [module]");
+        if (!toml.containsTable("application")) {
+            throw new ConstructionException("Missing [application]");
         }
-        var application = toml.getTable("module");
+        var application = toml.getTable("application");
 
         final String mainClass;
         try {
@@ -40,20 +40,15 @@ public record ApplicationModule(String mainClass, Map<MavenDependency, EnumSet<D
         }
         var testOnlyDependencies = toml.getTable("test-only-dependencies");
 
-        if (!toml.containsTable("compile-only-dependencies")) {
-            throw new ConstructionException("Missing [compile-only-dependencies]");
+        if (!toml.containsTable("bench-only-dependencies")) {
+            throw new ConstructionException("Missing [bench-only-dependencies]");
         }
-        var compileOnlyDependencies = toml.getTable("compile-only-dependencies");
+        var benchOnlyDependencies = toml.getTable("bench-only-dependencies");
 
 
-        if (!toml.containsTable("runtime-only-dependencies")) {
-            throw new ConstructionException("Missing [runtime-only-dependencies]");
-        }
-        var runtimeOnlyDependencies = toml.getTable("runtime-only-dependencies");
+        var dependencyMap = new HashMap<AvailableDuring, List<MavenDependency>>();
 
-        var dependencyMap = new HashMap<MavenDependency, EnumSet<DependencyScope>>();
-
-        Function<DependencyScope, Consumer<Map.Entry<String, Object>>> insert = scope -> entry -> {
+        Function<Scope, Consumer<Map.Entry<String, Object>>> insert = scope -> entry -> {
             var key = entry.getKey();
             var version = entry.getValue();
 
@@ -65,68 +60,73 @@ public record ApplicationModule(String mainClass, Map<MavenDependency, EnumSet<D
             var group = split[0];
             var artifact = split[1];
 
-            var dependency = new MavenDependency(new MavenDependency.Coordinate(group, artifact), (String) version, List.of());
-            dependencyMap.putIfAbsent(dependency, EnumSet.noneOf(DependencyScope.class));
-            dependencyMap.get(dependency).add(scope);
+            if (version instanceof String versionStr) {
+                var dependency = new MavenDependency(new MavenDependency.Coordinate(group, artifact), versionStr, List.of());
+
+                switch (scope) {
+                    case NORMAL -> {
+                        dependencyMap.putIfAbsent(AvailableDuring.NORMAL_RUN_TIME, new ArrayList<>());
+                        dependencyMap.get(AvailableDuring.NORMAL_RUN_TIME).add(dependency);
+
+                        dependencyMap.putIfAbsent(AvailableDuring.NORMAL_COMPILE_TIME, new ArrayList<>());
+                        dependencyMap.get(AvailableDuring.NORMAL_COMPILE_TIME).add(dependency);
+                    }
+                    case TEST ->  {
+                        dependencyMap.putIfAbsent(AvailableDuring.TEST_RUN_TIME, new ArrayList<>());
+                        dependencyMap.get(AvailableDuring.TEST_RUN_TIME).add(dependency);
+
+                        dependencyMap.putIfAbsent(AvailableDuring.TEST_COMPILE_TIME, new ArrayList<>());
+                        dependencyMap.get(AvailableDuring.TEST_COMPILE_TIME).add(dependency);
+                    }
+                    case BENCH -> {
+                        dependencyMap.putIfAbsent(AvailableDuring.BENCH_RUN_TIME, new ArrayList<>());
+                        dependencyMap.get(AvailableDuring.BENCH_RUN_TIME).add(dependency);
+
+                        dependencyMap.putIfAbsent(AvailableDuring.BENCH_COMPILE_TIME, new ArrayList<>());
+                        dependencyMap.get(AvailableDuring.BENCH_COMPILE_TIME).add(dependency);
+                    }
+                }
+            }
+
+            if (version instanceof Toml versionToml) {
+                var versionStr = Objects.requireNonNull(versionToml.getString("version"));
+
+                var availableDuring = EnumSet.noneOf(AvailableDuring.class);
+                versionToml.getList("available-at").forEach(available -> {
+                    if ("run-time".equals(available)) {
+                        availableDuring.add(switch (scope) {
+                            case NORMAL -> AvailableDuring.NORMAL_RUN_TIME;
+                            case TEST ->  AvailableDuring.TEST_RUN_TIME;
+                            case BENCH -> AvailableDuring.BENCH_RUN_TIME;
+                        });
+                    }
+                    else if ("compile-time".equals(available)) {
+                        availableDuring.add(switch (scope) {
+                            case NORMAL -> AvailableDuring.NORMAL_COMPILE_TIME;
+                            case TEST ->  AvailableDuring.TEST_COMPILE_TIME;
+                            case BENCH -> AvailableDuring.BENCH_COMPILE_TIME;
+                        });
+                    }
+                });
+                availableDuring.forEach(available -> {
+                    var dependency = new MavenDependency(new MavenDependency.Coordinate(group, artifact), versionStr, List.of());
+                    dependencyMap.putIfAbsent(available, new ArrayList<>());
+                    dependencyMap.get(available).add(dependency);
+                });
+
+            }
+
         };
 
-        dependencies.entrySet().forEach(insert.apply(DependencyScope.ALL));
-        testOnlyDependencies.entrySet().forEach(insert.apply(DependencyScope.TEST));
-        compileOnlyDependencies.entrySet().forEach(insert.apply(DependencyScope.COMPILE));
-        runtimeOnlyDependencies.entrySet().forEach(insert.apply(DependencyScope.RUNTIME));
-
+        dependencies.entrySet().forEach(insert.apply(Scope.NORMAL));
+        testOnlyDependencies.entrySet().forEach(insert.apply(Scope.TEST));
+        benchOnlyDependencies.entrySet().forEach(insert.apply(Scope.BENCH));
         return new ApplicationModule(mainClass, dependencyMap);
     }
 
-    public List<MavenDependency> runtimeDependencies() {
-        var deps = new ArrayList<MavenDependency>();
-        this.deps().forEach((dep, scopes) -> {
-            if (scopes.contains(DependencyScope.RUNTIME) || scopes.contains(DependencyScope.ALL)) {
-                deps.add(dep);
-            }
-        });
-        return deps;
+    public List<MavenDependency> dependencies(AvailableDuring availableDuring) {
+        return this.deps.getOrDefault(availableDuring, List.of());
     }
-
-    public List<MavenDependency> testCompileDependencies() {
-        var deps = new ArrayList<MavenDependency>();
-        this.deps().forEach((dep, scopes) -> {
-            if (scopes.contains(DependencyScope.COMPILE) ||
-                    scopes.contains(DependencyScope.TEST) ||
-                    scopes.contains(DependencyScope.ALL)
-            ) {
-                deps.add(dep);
-            }
-        });
-        return deps;
-    }
-
-    public List<MavenDependency> testRuntimeDependencies() {
-        var deps = new ArrayList<MavenDependency>();
-        this.deps().forEach((dep, scopes) -> {
-            if (scopes.contains(DependencyScope.RUNTIME) ||
-                    scopes.contains(DependencyScope.TEST) ||
-                    scopes.contains(DependencyScope.ALL)
-            ) {
-                deps.add(dep);
-            }
-        });
-        return deps;
-    }
-
-    public List<MavenDependency> compileDependencies() {
-        var deps = new ArrayList<MavenDependency>();
-        this.deps().forEach((dep, scopes) -> {
-            if (scopes.contains(DependencyScope.COMPILE) ||
-                    scopes.contains(DependencyScope.ALL)
-            ) {
-                deps.add(dep);
-            }
-        });
-        return deps;
-    }
-
-
 
     public static final class ConstructionException extends Exception {
         private ConstructionException(String msg) {
