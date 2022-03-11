@@ -125,7 +125,34 @@ public record ApplicationModule(String mainClass, Map<AvailableDuring, List<Mave
     }
 
     public List<MavenDependency> dependencies(AvailableDuring availableDuring) {
-        return this.deps.getOrDefault(availableDuring, List.of());
+        return switch (availableDuring) {
+            case NORMAL_COMPILE_TIME -> this.deps.getOrDefault(AvailableDuring.NORMAL_COMPILE_TIME, List.of());
+            case NORMAL_RUN_TIME -> this.deps.getOrDefault(AvailableDuring.NORMAL_RUN_TIME, List.of());
+            case TEST_COMPILE_TIME -> {
+                var deps = new ArrayList<MavenDependency>();
+                deps.addAll(dependencies(AvailableDuring.NORMAL_COMPILE_TIME));
+                deps.addAll(this.deps.getOrDefault(AvailableDuring.TEST_COMPILE_TIME, List.of()));
+                yield deps;
+            }
+            case TEST_RUN_TIME -> {
+                var deps = new ArrayList<MavenDependency>();
+                deps.addAll(dependencies(AvailableDuring.NORMAL_RUN_TIME));
+                deps.addAll(this.deps.getOrDefault(AvailableDuring.TEST_RUN_TIME, List.of()));
+                yield deps;
+            }
+            case BENCH_COMPILE_TIME -> {
+                var deps = new ArrayList<MavenDependency>();
+                deps.addAll(dependencies(AvailableDuring.NORMAL_COMPILE_TIME));
+                deps.addAll(this.deps.getOrDefault(AvailableDuring.BENCH_COMPILE_TIME, List.of()));
+                yield deps;
+            }
+            case BENCH_RUN_TIME -> {
+                var deps = new ArrayList<MavenDependency>();
+                deps.addAll(dependencies(AvailableDuring.NORMAL_RUN_TIME));
+                deps.addAll(this.deps.getOrDefault(AvailableDuring.BENCH_RUN_TIME, List.of()));
+                yield deps;
+            }
+        };
     }
 
     public static final class ConstructionException extends Exception {

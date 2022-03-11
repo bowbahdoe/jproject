@@ -5,11 +5,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFileFilter;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 import java.util.spi.ToolProvider;
 
 import static dev.mccue.jproject.Conventions.*;
@@ -17,6 +15,46 @@ import static dev.mccue.jproject.Conventions.*;
 public final class Main {
 
     private Main() {}
+
+    /**
+     * Small helper to pull the path out of a basis, but cache results.
+     */
+    private static String path(Basis basis) {
+        var cachePath = Path.of(".path-cache");
+        Map<?, ?> cacheMap = null;
+        try (var fis = new FileInputStream(cachePath.toFile());
+             var ois = new ObjectInputStream(fis)) {
+            cacheMap = (Map<?, ?>) ois.readObject();
+            // System.err.println("Loaded cache: " + cacheMap);
+        } catch (FileNotFoundException e) {
+            // System.err.println("No cache file found");
+            // noop
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+        if (cacheMap != null &&  cacheMap.get(basis) instanceof String path) {
+            // System.err.println("Using cached value: " + path);
+            return path;
+        }
+        else {
+            // System.err.println("Caching path: " + basis.path());
+            var path= basis.path();
+            var newCacheMap = cacheMap == null ?
+                    new HashMap<>() :
+                    new HashMap<Object, Object>(cacheMap);
+            newCacheMap.put(basis, path);
+            try (var fos = new FileOutputStream(cachePath.toFile());
+                 var oos = new ObjectOutputStream(fos)) {
+                oos.writeObject(newCacheMap);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+            return path;
+        }
+    }
 
     private static void crashOn(int status) {
         if (status != 0) {
@@ -49,34 +87,27 @@ public final class Main {
         FileUtils.deleteDirectory(Conventions.TARGET_DIR.toFile());
     }
 
-    // jproject --alias=test java --class-path ,,, Main.java
-    // javac Main.java Lib.java other/A.java
-    // javac --class-path a:b:c src/**.java
-    // javac --module-path a:b:c --module a.b.c
-    // "artifacts" <- libraries
-    // "classes" <- units of code
-    // "packages" <- namespaces
-    // "modules" <- explicit encapsulation ...
-    // jproject run
-    // jproject test
-    // jproject eject
     private static void compile(ApplicationModule project) throws Exception {
         clean();
-        var path = Basis.usingMavenCentral()
+        var path = path(Basis.usingMavenCentral()
                 .addDependencies(project.dependencies(AvailableDuring.NORMAL_COMPILE_TIME))
-                .build()
-                .path();
+                .build());
 
         var javacArgs = new ArrayList<>(List.of(
                 "-g", // Generates debug symbols. Should always do this
                 "-Xlint:all,-processing",
-                "--module-path", path,
-                "--processor-module-path", path,
                 "--add-modules",
                 "ALL-MODULE-PATH",
                 "-d", SRC_CLASSES_DIR.toString(),
                 "-s", SRC_GENERATED_SOURCES_DIR.toString()
         ));
+
+        if (!"".equals(path)) {
+            javacArgs.addAll(List.of(
+                    "--module-path", path,
+                    "--processor-module-path", path
+            ));
+        }
 
         FileUtils
                 .listFiles(SRC_DIR.toFile(), new String[] { "java" }, true)
@@ -94,11 +125,7 @@ public final class Main {
         );
     }
 
-    private static void newProject() throws Exception {
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("primary module name: ");
-        var projectName = scanner.next();
-
+    private static void newProject(String projectName) throws Exception {
         var projectDirectory = Path.of(projectName);
         try {
             Files.createDirectory(projectDirectory);
@@ -108,16 +135,26 @@ public final class Main {
         }
 
         Files.writeString(Path.of(projectDirectory.toString(), "jproject.toml"), """
-                [application]
-                main-class = "%s.Main"
-                                
-                [dependencies]
-                                
-                [test-only-dependencies]
-                "org.junit.jupiter/junit-jupiter-api" = "5.8.2"
-                                
-                [bench-only-dependencies]
-                """.formatted(projectName),
+                        [application]
+                        main-class = "%s.Main"
+                                        
+                        [dependencies]
+                                        
+                        [test-only-dependencies]
+                        "org.junit.jupiter/junit-jupiter-api" = "5.8.2"
+                                        
+                        [bench-only-dependencies]
+                        "org.openjdk.jmh/jmh-core" = "1.21"
+                        "org.openjdk.jmh/jmh-generator-annprocess" = { version = "1.21", available-at = ["compile-time"] }
+                        """.formatted(projectName),
+                StandardOpenOption.CREATE_NEW
+        );
+
+        Files.writeString(Path.of(projectDirectory.toString(), ".gitignore"), """
+                        target/
+                        .path-cache
+                        .DS_Store
+                        """.formatted(projectName),
                 StandardOpenOption.CREATE_NEW
         );
 
@@ -168,24 +205,41 @@ public final class Main {
         var benchDirectory = Path.of(projectDirectory.toString(), "bench");
         Files.createDirectory(benchDirectory);
 
+        var bench = Path.of(Path.of(benchDirectory.toString(), paths).toString(), "BasicBenchmark.java");
+        bench.getParent().toFile().mkdirs();
+        Files.writeString(bench, """
+                        package %s;
+                                        
+                        import org.openjdk.jmh.annotations.Benchmark;
+                                    
+                        public class BasicBenchmark {
+                            @Benchmark
+                            public void testMethod() {
+                                int a = 1;
+                                int b = 2;
+                                int sum = a + b;
+                            }
+                        }
+                        """.formatted(projectName),
+                StandardOpenOption.CREATE_NEW
+        );
+
+
         new ProcessBuilder("git", "init")
                 .directory(projectDirectory.toFile())
                 .start();
     }
     private static void compileTest(ApplicationModule project) throws Exception {
-        var path = Basis.usingMavenCentral()
+        var path = path(Basis.usingMavenCentral()
                 .addDependencies(project.dependencies(AvailableDuring.TEST_COMPILE_TIME))
-                .addDependencies(project.dependencies(AvailableDuring.NORMAL_COMPILE_TIME))
-                .build()
-                .path();
+                .build());
         var javacArgs = new ArrayList<>(List.of(
                 "-g", // Generates debug symbols. Should always do this
                 "-Xlint:all,-processing",
                 "--class-path",
-                Basis.builder()
+                path(Basis.builder()
                         .addPath(SRC_CLASSES_DIR)
-                        .build()
-                        .path(),
+                        .build()),
                 "--module-path",
                 path,
                 "--processor-module-path",
@@ -207,11 +261,9 @@ public final class Main {
     }
 
     private static void compileBench(ApplicationModule project) throws Exception {
-        var path = Basis.usingMavenCentral()
+        var path = path(Basis.usingMavenCentral()
                 .addDependencies(project.dependencies(AvailableDuring.BENCH_COMPILE_TIME))
-                .addDependencies(project.dependencies(AvailableDuring.NORMAL_COMPILE_TIME))
-                .build()
-                .path();
+                .build());
 
         var javacArgs = new ArrayList<>(List.of(
                 "-g", // Generates debug symbols. Should always do this
@@ -223,7 +275,6 @@ public final class Main {
                 "--add-modules",
                 "ALL-MODULE-PATH",
                 "-d", BENCH_CLASSES_DIR.toString(),
-
                 "-s", BENCH_GENERATED_SOURCES_DIR.toString()
         ));
 
@@ -247,7 +298,7 @@ public final class Main {
             var subcommand = args[0];
             if ("new".equals(subcommand)) {
                 // Create a new project
-                newProject();
+                newProject(args[1]);
                 return;
             }
             // Try to find jproject.toml
@@ -261,8 +312,6 @@ public final class Main {
                     Conventions.JPROJECT_TOML_PATH
             );
             switch (subcommand) {
-
-
                 // Formats code
                 case "fmt" -> {
                     var basis = Basis.usingMavenCentral()
@@ -271,7 +320,7 @@ public final class Main {
                     var formatCommand = new ArrayList<>(List.of(
                             "java",
                             "--module-path",
-                            basis.path(),
+                            path(basis),
                             "--add-exports", "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
                             "--add-exports", "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
                             "--add-exports", "jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED",
@@ -307,45 +356,44 @@ public final class Main {
                 // Run the project
                 case "run" -> {
                     compile(project);
-                    runCommand(List.of(
+                    var runArgs = new ArrayList<>(List.of(
                             "java",
                             "--class-path",
-                            Basis.builder()
+                            path(Basis.builder()
                                     .addPath(SRC_CLASSES_DIR)
-                                    .build()
-                                    .path(),
-                            "--module-path",
-                            Basis.usingMavenCentral()
-                                    .addDependencies(project.dependencies(AvailableDuring.NORMAL_RUN_TIME))
-                                    .build()
-                                    .path(),
-
+                                    .build()),
                             "--add-modules",
-                            "ALL-MODULE-PATH",
-                            project.mainClass()
+                            "ALL-MODULE-PATH"
                     ));
+
+                    var deps = path(Basis.usingMavenCentral()
+                            .addDependencies(project.dependencies(AvailableDuring.NORMAL_RUN_TIME))
+                            .build());
+
+                    if (!"".equals(deps)) {
+                        runArgs.add("--module-path");
+                        runArgs.add(deps);
+                    }
+
+                    runArgs.add(project.mainClass());
+
+                    runCommand(runArgs);
                 }
 
                 // Run tests with junit
                 case "test" -> {
                     compile(project);
                     compileTest(project);
-
-                    var jacocoBasis = Basis.usingMavenCentral()
-                            .addDependency(new MavenDependency("org.jacoco", "org.jacoco.agent", "0.8.7"))
-                            .build();
                     runCommand(List.of(
                             "java",
                             "-jar",
                             JUNIT_RUNNER_PATH.toString(),
                             "--class-path",
-                            Basis.usingMavenCentral()
+                            path(Basis.usingMavenCentral()
                                     .addDependencies(project.dependencies(AvailableDuring.TEST_RUN_TIME))
-                                    .addDependencies(project.dependencies(AvailableDuring.NORMAL_RUN_TIME))
                                     .addPath(SRC_CLASSES_DIR)
                                     .addPath(TEST_CLASSES_DIR)
-                                    .build()
-                                    .path(),
+                                    .build()),
                             "--scan-classpath"
                     ));
                 }
@@ -354,15 +402,19 @@ public final class Main {
                     var javadocArgs = new ArrayList<>( List.of(
                             "-d",
                             "target/doc",
-                            "--module-path", Basis.usingMavenCentral()
-                                    .addDependencies(project.dependencies(AvailableDuring.NORMAL_COMPILE_TIME))
-                                    .build()
-                                    .path(),
                             "--add-modules",
                             "ALL-MODULE-PATH",
                             "--source-path", "src",
                             "--show-packages", "all"
                     ));
+                    var path = path(Basis.usingMavenCentral()
+                            .addDependencies(project.dependencies(AvailableDuring.NORMAL_COMPILE_TIME))
+                            .build());
+                    if (!"".equals(path)) {
+                        javadocArgs.add("--module-path");
+                        javadocArgs.add(path);
+                    }
+
                     FileUtils
                             .listFiles(SRC_DIR.toFile(), new String[] { "java" }, true)
                             .forEach(sourceFile -> javadocArgs.add(sourceFile.toString()));
@@ -373,28 +425,51 @@ public final class Main {
                 case "bench" -> {
                     compile(project);
                     compileBench(project);
-                    runCommand(List.of(
+                    var benchCmd = new ArrayList<>(List.of(
                             "java",
-                            "--class-path",
-                            Basis.usingMavenCentral()
-                                    .addDependencies(project.dependencies(AvailableDuring.BENCH_RUN_TIME))
-                                    .addDependencies(project.dependencies(AvailableDuring.NORMAL_RUN_TIME))
+                            path(Basis.usingMavenCentral()
                                     .addPath(SRC_CLASSES_DIR)
                                     .addPath(BENCH_CLASSES_DIR)
-                                    .build()
-                                    .path(),
+                                    .build()),
+                            "--class-path",
+                            path(Basis.usingMavenCentral()
+                                    .addPath(SRC_CLASSES_DIR)
+                                    .addPath(BENCH_CLASSES_DIR)
+                                    .build()),
                             "org.openjdk.jmh.Main"
                     ));
+                    for (int i = 1; i < args.length; i++) {
+                        benchCmd.add(args[i]);
+                    }
+                    runCommand(benchCmd);
                 }
                 // Print out the tree of dependencies
                 case "tree" -> {
-                    // TODO: test, compile, bench, etc
+                    if (args.length == 2) {
+                        if (args[1].equals("test-compile-time")) {
+                            Basis.usingMavenCentral()
+                                    .addDependencies(project.dependencies(AvailableDuring.TEST_COMPILE_TIME))
+                                    .build()
+                                    .printTree();
+                        }
+                        else if (args[1].equals("bench-compile-time")) {
+                            Basis.usingMavenCentral()
+                                    .addDependencies(project.dependencies(AvailableDuring.BENCH_COMPILE_TIME))
+                                    .build()
+                                    .printTree();
+                        }
+                    }
                     Basis.usingMavenCentral()
                             .addDependencies(project.dependencies(AvailableDuring.NORMAL_COMPILE_TIME))
                             .build()
                             .printTree();
                 }
 
+                case "path" -> {
+                    System.out.println(path(Basis.usingMavenCentral()
+                            .addDependencies(project.dependencies(AvailableDuring.BENCH_COMPILE_TIME))
+                            .build()));
+                }
             }
         }
 

@@ -22,38 +22,39 @@ public final class Setup {
      */
     public static void setUp() throws IOException {
         // Clear existing ~/.jproject
-        FileUtils.deleteDirectory(TOOL_DIRECTORY.toFile());
+        if (!Files.exists(TOOL_DIRECTORY)) {
+            TOOL_DIRECTORY.toFile().mkdirs();
 
-        TOOL_DIRECTORY.toFile().mkdirs();
+            // Copy Google Java Format
+            var googleJavaFormat = "google-java-format-1.14.0-all-deps.jar";
+            Files.write(
+                    GOOGLE_JAVA_FORMAT_PATH,
+                    Objects.requireNonNull(
+                            Main.class.getResourceAsStream("/" + googleJavaFormat),
+                            "Google Java Format should be on the classpath"
+                    ).readAllBytes()
+            );
 
-        // Copy Google Java Format
-        var googleJavaFormat = "google-java-format-1.14.0-all-deps.jar";
-        Files.write(
-                GOOGLE_JAVA_FORMAT_PATH,
-                Objects.requireNonNull(
-                        Main.class.getResourceAsStream("/" + googleJavaFormat),
-                        "Google Java Format should be on the classpath"
-                ).readAllBytes()
-        );
+            // Copy Junit runner
+            var junit = "junit-platform-console-standalone-1.8.2.jar";
+            Files.write(
+                    JUNIT_RUNNER_PATH,
+                    Objects.requireNonNull(
+                            Main.class.getResourceAsStream("/" + junit),
+                            "JUnit Platform Console should be on the classpath"
+                    ).readAllBytes()
+            );
 
-        // Copy Junit runner
-        var junit = "junit-platform-console-standalone-1.8.2.jar";
-        Files.write(
-                JUNIT_RUNNER_PATH,
-                Objects.requireNonNull(
-                        Main.class.getResourceAsStream("/" + junit),
-                        "JUnit Platform Console should be on the classpath"
-                ).readAllBytes()
-        );
+            // Copy jacoco ant plugin
+            var jacoco = "org.jacoco.agent-0.8.7.jar";
+            Files.write(
+                    JACOCO_AGENT_PATH,
+                    Objects.requireNonNull(
+                            Main.class.getResourceAsStream("/" + jacoco),
+                            "Jacoco Ant Plugin should be on the classpath"
+                    ).readAllBytes()
+            );
+        }
 
-        // Copy jacoco ant plugin
-        var jacoco = "org.jacoco.agent-0.8.7.jar";
-        Files.write(
-                JACOCO_AGENT_PATH,
-                Objects.requireNonNull(
-                        Main.class.getResourceAsStream("/" + jacoco),
-                        "Jacoco Ant Plugin should be on the classpath"
-                ).readAllBytes()
-        );
     }
 }

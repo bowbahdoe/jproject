@@ -3,7 +3,6 @@ package dev.mccue.jproject;
 public final class Messages {
     private Messages() {}
 
-    // older sketch of the idea
     public static final String USAGE = """
                     Java's package manager
                     
@@ -26,16 +25,15 @@ public final class Messages {
                     --list                       List all available tools
                     
                     Available tools (see all tools with --list):
-                        new        Create a new Java module
-                        run        Run the project
-                        test       Run JUnit tests
-                        bench      Run JMH Benchmarks
-                        doc        Generate Javadocs
-                        publish    Publish module to a repository
-                        
-                        eject      Exit from the template to the underlying tools
+                        new      Create a new Java module
+                        run      Run the project
+                        test     Run JUnit tests
+                        bench    Run JMH Benchmarks
+                        doc      Generate Javadocs
+                        idea     Generate scaffolding to open in IntelliJ
+                        path     Echo the path that will be used to resolve dependencies
+                        tree     Show the dependency tree of the current project
                         
                     See 'jproject help <command>' for more information on a specific command.
                     """;
-
 }

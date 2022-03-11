@@ -15,40 +15,36 @@ import static dev.mccue.jproject.model.Basis.Requires.*;
  */
 public final class Basis implements Serializable {
     @Serial
-    private static final long serialVersionUID = 1;
+    private static final long serialVersionUID = 1L;
 
-    private final List<String> jvmArgs;
     private final Object deps;
     private final Object repos;
     private final List<Path> paths;
 
-    private record SerializationProxy(
-            List<String> jvmArgs,
+    private record BasisProxy(
             Object deps,
             Object repos,
             List<String> paths
     ) implements Serializable {
         @Serial
-        private static final long serialVersionUID = 1;
+        private static final long serialVersionUID = 1L;
 
         @Serial
-        Object readResolve() throws ObjectStreamException {
+        private Object readResolve() throws ObjectStreamException {
             return new Basis(this);
         }
     }
 
     @Serial
-    Object writeReplace() throws ObjectStreamException {
-        return new SerializationProxy(
-                this.jvmArgs,
+    private Object writeReplace() throws ObjectStreamException {
+        return new BasisProxy(
                 this.deps,
                 this.repos,
                 this.paths.stream().map(Path::toString).toList()
         );
     }
 
-    private Basis(SerializationProxy serializationProxy) {
-        this.jvmArgs = serializationProxy.jvmArgs();
+    private Basis(BasisProxy serializationProxy) {
         this.deps = serializationProxy.deps();
         this.repos = serializationProxy.repos();
         this.paths = serializationProxy.paths().stream()
@@ -92,8 +88,6 @@ public final class Basis implements Serializable {
             );
         }
 
-
-        this.jvmArgs = List.copyOf(builder.jvmArgs);
         this.deps = deps;
         this.repos = repos;
         this.paths = List.copyOf(builder.paths);
@@ -104,46 +98,29 @@ public final class Basis implements Serializable {
      * the classpath and/or modulepath at startup.
      */
     public String path() {
-        var cachePath = Path.of(".path-cache");
-        Map<?, ?> cacheMap = null;
-        try (var fis = new FileInputStream(cachePath.toFile());
-             var ois = new ObjectInputStream(fis)) {
-            cacheMap = (Map<?, ?>) ois.readObject();
-        } catch (FileNotFoundException e) {
-            // noop
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+        return (String) JOIN_CLASSPATH.invoke(
+                VEC.invoke(this.pathRoots().stream().map(Path::toString).toList())
+        );
+    }
 
-        if (cacheMap != null &&  cacheMap.get(this) instanceof String path) {
-            return path;
-        }
-        else {
-            var path = (String) MAKE_CLASSPATH.invoke(
-                    RESOLVE_DEPS.invoke(
-                            HASH_MAP.invoke(
-                                    KEYWORD.invoke("deps"), this.deps,
-                                    KEYWORD.invoke("mvn/repos"), this.repos
-                            ),
-                            HASH_MAP.invoke()
-                    ),
-                    VEC.invoke(this.paths.stream().map(Path::toString).toList()),
-                    null
-            );
-            var newCacheMap = cacheMap == null ?
-                    new HashMap<>() :
-                    new HashMap<Object, Object>(cacheMap);
-            newCacheMap.put(this, path);
-            try (var fos = new FileOutputStream(cachePath.toFile());
-                 var oos = new ObjectOutputStream(fos)) {
-                oos.writeObject(newCacheMap);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-            return path;
-        }
+    public List<Path> pathRoots() {
+        var classpathMap = (IFn) MAKE_CLASSPATH_MAP.invoke(
+
+                HASH_MAP.invoke(
+                        KEYWORD.invoke("paths"),
+                        VEC.invoke(this.paths.stream().map(Path::toString).toList())
+                ),
+                RESOLVE_DEPS.invoke(
+                        HASH_MAP.invoke(
+                                KEYWORD.invoke("deps"), this.deps,
+                                KEYWORD.invoke("mvn/repos"), this.repos
+                        ),
+                        HASH_MAP.invoke()
+                ),
+                null
+        );
+        var roots = (List<?>) classpathMap.invoke(KEYWORD.invoke("classpath-roots"));
+        return roots.stream().map(root -> Path.of((String) root)).toList();
     }
 
     /**
@@ -159,13 +136,6 @@ public final class Basis implements Serializable {
                         HASH_MAP.invoke()
                 )
         );
-    }
-
-    /**
-     * @return The args to pass to the JVM.
-     */
-    public List<String> jvmArgs() {
-        return List.copyOf(this.jvmArgs);
     }
 
     public static Builder builder() {
@@ -188,7 +158,8 @@ public final class Basis implements Serializable {
         static final IFn ASSOC;
 
         static final IFn RESOLVE_DEPS;
-        static final IFn MAKE_CLASSPATH;
+        static final IFn MAKE_CLASSPATH_MAP;
+        static final IFn JOIN_CLASSPATH;
         static final IFn PRINT_TREE;
 
         static {
@@ -206,19 +177,18 @@ public final class Basis implements Serializable {
             var REQUIRE = Clojure.var("clojure.core", "require");
             REQUIRE.invoke(Clojure.read("[clojure.tools.deps.alpha]"));
             RESOLVE_DEPS = Clojure.var("clojure.tools.deps.alpha", "resolve-deps");
-            MAKE_CLASSPATH = Clojure.var("clojure.tools.deps.alpha", "make-classpath");
+            MAKE_CLASSPATH_MAP = Clojure.var("clojure.tools.deps.alpha", "make-classpath-map");
+            JOIN_CLASSPATH = Clojure.var("clojure.tools.deps.alpha", "join-classpath");
             PRINT_TREE = Clojure.var("clojure.tools.deps.alpha", "print-tree");
         }
     }
 
     public static final class Builder {
-        private final List<String> jvmArgs;
         private final List<MavenDependency> dependencies;
         private final List<MavenRepository> repositories;
         private final List<Path> paths;
 
         private Builder() {
-            this.jvmArgs = new ArrayList<>();
             this.dependencies = new ArrayList<>();
             this.repositories = new ArrayList<>();
             this.paths = new ArrayList<>();
@@ -255,14 +225,13 @@ public final class Basis implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Basis basis = (Basis) o;
-        return Objects.equals(jvmArgs, basis.jvmArgs)
-                && Objects.equals(deps, basis.deps)
+        return Objects.equals(deps, basis.deps)
                 && Objects.equals(repos, basis.repos)
                 && Objects.equals(paths, basis.paths);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(jvmArgs, deps, repos, paths);
+        return Objects.hash(deps, repos, paths);
     }
 }
