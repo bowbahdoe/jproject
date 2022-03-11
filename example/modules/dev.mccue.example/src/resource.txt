@@ -1,1 +1,0 @@
-Hello, should be included in jar
