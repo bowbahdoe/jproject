@@ -10,7 +10,7 @@ import java.util.*;
 import static dev.mccue.jproject.model.Basis.Requires.*;
 
 /**
- * A "basis" is the set of dependencies and flags to use when constructing
+ * A "basis" is the set of dependencies to use when constructing
  * a JVM runtime.
  */
 public final class Basis implements Serializable {
@@ -83,7 +83,7 @@ public final class Basis implements Serializable {
                     repository.name(),
                     HASH_MAP.invoke(
                             KEYWORD.invoke("url"),
-                            repository.url().toString()
+                            repository.uri().toString()
                     )
             );
         }
@@ -95,7 +95,8 @@ public final class Basis implements Serializable {
 
     /**
      * @return The path containing all the dependencies that should be placed on
-     * the classpath and/or modulepath at startup.
+     * the classpath and/or modulepath at startup. This is already in the format
+     * where it can be used as a CLI argument.
      */
     public String path() {
         return (String) JOIN_CLASSPATH.invoke(
@@ -103,9 +104,25 @@ public final class Basis implements Serializable {
         );
     }
 
+    /**
+     * @return Same result as Basis#path.
+     */
+    public String classPath() {
+        return this.path();
+    }
+
+    /**
+     * @return Same result as Basis#path.
+     */
+    public String modulePath() {
+        return this.path();
+    }
+
+    /**
+     * @return The r
+     */
     public List<Path> pathRoots() {
         var classpathMap = (IFn) MAKE_CLASSPATH_MAP.invoke(
-
                 HASH_MAP.invoke(
                         KEYWORD.invoke("paths"),
                         VEC.invoke(this.paths.stream().map(Path::toString).toList())
@@ -138,10 +155,17 @@ public final class Basis implements Serializable {
         );
     }
 
+    /**
+     * @return A new builder;
+     */
     public static Builder builder() {
         return new Builder();
     }
 
+    /**
+     * @return A new builder with Maven Central already added to the list of
+     * repositories.
+     */
     public static Builder usingMavenCentral() {
         return new Builder().addRepository(MavenRepository.MAVEN_CENTRAL);
     }
@@ -166,7 +190,6 @@ public final class Basis implements Serializable {
             KEYWORD = Clojure.var("clojure.core", "keyword");
             SYMBOL = Clojure.var("clojure.core", "symbol");
 
-
             VEC = Clojure.var("clojure.core", "vec");
             VECTOR = Clojure.var("clojure.core", "vector");
             CONJ = Clojure.var("clojure.core", "conj");
@@ -183,6 +206,9 @@ public final class Basis implements Serializable {
         }
     }
 
+    /**
+     * Builder for Basis.
+     */
     public static final class Builder {
         private final List<MavenDependency> dependencies;
         private final List<MavenRepository> repositories;
@@ -209,8 +235,18 @@ public final class Basis implements Serializable {
             return this;
         }
 
+        public Builder addRepositories(List<MavenRepository> repositories) {
+            this.repositories.addAll(repositories);
+            return this;
+        }
+
         public Builder addPath(Path path) {
             this.paths.add(path);
+            return this;
+        }
+
+        public Builder addPaths(List<Path> paths) {
+            this.paths.addAll(paths);
             return this;
         }
 

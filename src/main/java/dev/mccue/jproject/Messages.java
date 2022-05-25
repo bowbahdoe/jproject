@@ -6,26 +6,19 @@ public final class Messages {
     public static final String USAGE = """
                     Java's package manager
                     
-                    Usage: jproject <options> <tool> <tool-options>
+                    Usage: jproject <command> <options>
                     
                     Sample usages:
                     --------------
-                        Run a single source-file program
-                            jproject java -cp ,,, src/com/company/MainClass.java
-                        Execute a class
-                            jproject java -cp ,,, com.company.MainClass
-                        Execute a class with an alias
-                            jproject --alias=build java -cp ,,, com.company.MainClass
-                        Run javac with the project module-path
-                            jproject javac --module-path ,,, -d target/classes src/*
+                        Create a new project named "example"
+                            jproject new example
+                        Run a project
+                            jproject run
+                        Run tests for a project
+                            jproject test
                     
-                    <options>:
-                    -V, --version                Print version info and exit
-                    -h, --help                   Print help information and exit
-                    --list                       List all available tools
-                    
-                    Available tools (see all tools with --list):
-                        new      Create a new Java module
+                    Available commands:
+                        new      Create a new Java project
                         run      Run the project
                         test     Run JUnit tests
                         bench    Run JMH Benchmarks

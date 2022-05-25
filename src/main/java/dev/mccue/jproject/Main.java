@@ -5,6 +5,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFileFilter;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticListener;
+import javax.tools.JavaFileObject;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
@@ -54,6 +57,7 @@ public final class Main {
             }
             return path;
         }
+
     }
 
     private static void crashOn(int status) {
@@ -205,7 +209,7 @@ public final class Main {
         var benchDirectory = Path.of(projectDirectory.toString(), "bench");
         Files.createDirectory(benchDirectory);
 
-        var bench = Path.of(Path.of(benchDirectory.toString(), paths).toString(), "BasicBenchmark.java");
+        /* var bench = Path.of(Path.of(benchDirectory.toString(), paths).toString(), "BasicBenchmark.java");
         bench.getParent().toFile().mkdirs();
         Files.writeString(bench, """
                         package %s;
@@ -222,7 +226,7 @@ public final class Main {
                         }
                         """.formatted(projectName),
                 StandardOpenOption.CREATE_NEW
-        );
+        ); */
 
 
         new ProcessBuilder("git", "init")
@@ -473,5 +477,9 @@ public final class Main {
             }
         }
 
+        var basis = Basis.builder()
+                .addDependency(new MavenDependency("org.apache", "whatever", "12.14"))
+                .addPath(SRC_CLASSES_DIR)
+                .build();
     }
 }
