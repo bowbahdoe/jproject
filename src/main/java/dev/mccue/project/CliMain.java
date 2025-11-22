@@ -101,6 +101,22 @@ public final class CliMain {
                 Path.of("src", "Main.java").toString()
         );
 
+        try {
+            var gitignore = new ArrayList<>(Files.readAllLines(Path.of(".gitignore")));
+            if (!gitignore.contains("dependencySets")) {
+                gitignore.add("dependencySets");
+            }
+            if (!gitignore.contains("run")) {
+                gitignore.add("run");
+            }
+            Files.writeString(Path.of(".gitignore"), String.join("\n", gitignore));
+        } catch (NoSuchFileException e) {
+            Files.writeString(Path.of(".gitignore"), """
+                    dependencySets
+                    run
+                    """);
+        }
+
         return 0;
     }
 
@@ -425,6 +441,24 @@ public final class CliMain {
             }
         }
 
+        List<String> gitignore;
+        try {
+            gitignore = new ArrayList<>(Files.readAllLines(Path.of(".gitignore")));
+        } catch (NoSuchFileException e) {
+            gitignore = new ArrayList<>();
+        }
+
+        if (!gitignore.contains("dependencySets")) {
+            gitignore.add("dependencySets");
+        }
+        if (argumentFiles != null && !argumentFiles.isEmpty()) {
+            for (var argumentFile : argumentFiles) {
+                if (!gitignore.contains(argumentFile.name())) {
+                    gitignore.add(argumentFile.name());
+                }
+            }
+        }
+        Files.writeString(Path.of(".gitignore"), String.join("\n", gitignore));
 
 
 
