@@ -37,6 +37,10 @@ build/
 ### Mac OS ###
 .DS_Store
 
-jresolve
+jproject
 deps
 .idea
+
+# Added by cargo
+
+/target

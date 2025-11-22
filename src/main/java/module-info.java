@@ -1,21 +1,20 @@
-import dev.mccue.resolve.cli.JResolveToolProvider;
+import dev.mccue.project.JProjectToolProvider;
 
 import java.util.spi.ToolProvider;
 
-module dev.mccue.resolve.cli {
+module dev.mccue.project {
     requires dev.mccue.resolve;
     requires dev.mccue.json;
     requires dev.mccue.purl;
     requires info.picocli;
     requires java.xml;
-    requires org.tomlj;
     requires dev.mccue.guava.graph;
 
-    opens dev.mccue.resolve.cli
+    opens dev.mccue.project
             to info.picocli;
 
-    exports dev.mccue.resolve.cli;
+    exports dev.mccue.project;
 
     provides ToolProvider
-            with JResolveToolProvider;
+            with JProjectToolProvider;
 }

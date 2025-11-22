@@ -1,18 +1,13 @@
 [
   {
-    "name" : "dev.mccue.resolve.cli.CliMain",
+    "name" : "dev.mccue.project.CliMain",
     "allDeclaredConstructors" : true,
     "allPublicConstructors" : true,
     "allDeclaredMethods" : true,
     "allPublicMethods" : true,
     "fields" : [
       { "name" : "cachePath" },
-      { "name" : "dependencies" },
-      { "name" : "dependencyFile" },
       { "name" : "enrichPom" },
-      { "name" : "mavenRepositoriesFile" },
-      { "name" : "outputDirectory" },
-      { "name" : "outputFile" },
       { "name" : "printTree" }
     ]
   },

@@ -7,9 +7,9 @@ make_reflect_config:
     ./mvnw -Ppicocli-codegen dependency:copy-dependencies
     ./mvnw package
     java \
-        --class-path target/dependency/picocli-codegen-4.7.5.jar:target/jresolve-cli-2025.02.15.jar:target/dependency/json-2024.11.20.jar:target/dependency/picocli-4.7.5.jar:target/dependency/purl-2023.11.07.jar:target/dependency/resolve-2025.02.14.1.jar \
+        --class-path target/dependency/picocli-codegen-4.7.5.jar:target/jproject-2025.11.21.jar:target/dependency/json-2024.11.20.jar:target/dependency/picocli-4.7.5.jar:target/dependency/purl-2023.11.07.jar:target/dependency/resolve-2025.02.14.1.jar \
         picocli.codegen.aot.graalvm.ReflectionConfigGenerator \
-        dev.mccue.resolve.cli.CliMain > reflect.json
+        dev.mccue.project.CliMain > reflect.json
 
 exe static='':
     ./mvnw clean
@@ -19,15 +19,15 @@ exe static='':
     native-image \
         --class-path $(./join.sh) \
         -H:+UnlockExperimentalVMOptions -H:ReflectionConfigurationFiles=reflect.json -H:+ReportUnsupportedElementsAtRuntime \
-        -jar target/jresolve-cli-2025.02.15.jar \
-        {{static}} jresolve
+        -jar target/jproject-2025.11.21.jar \
+        {{static}} jproject
 
 exe_windows:
     ./mvnw clean
     ./mvnw compile
     ./mvnw dependency:copy-dependencies
     ./mvnw package
-    native-image.cmd --module-path "target\dependency\json-2024.11.20.jar;target\dependency\picocli-4.7.5.jar;target\dependency\purl-2023.11.07.jar;target\dependency\resolve-2025.02.14.1.jar" -H:+UnlockExperimentalVMOptions -H:ReflectionConfigurationFiles=reflect.json -H:+ReportUnsupportedElementsAtRuntime -jar "target\jresolve-cli-2024.05.26.jar" jresolve
+    native-image.cmd --module-path "target\dependency\json-2024.11.20.jar;target\dependency\picocli-4.7.5.jar;target\dependency\purl-2023.11.07.jar;target\dependency\resolve-2025.02.14.1.jar" -H:+UnlockExperimentalVMOptions -H:ReflectionConfigurationFiles=reflect.json -H:+ReportUnsupportedElementsAtRuntime -jar "target\jproject-2024.05.26.jar" jproject
 
 release:
     ./mvnw clean
@@ -39,8 +39,8 @@ release:
     jlink \
         --module-path target/dependency:target/classes \
         --output target/jlinked-jre \
-        --add-modules dev.mccue.resolve.cli \
-        --launcher jresolve=dev.mccue.resolve.cli/dev.mccue.resolve.cli.CliMain
+        --add-modules dev.mccue.project \
+        --launcher jproject=dev.mccue.project/dev.mccue.project.CliMain
 
 jreleaser:
     ./mvnw clean

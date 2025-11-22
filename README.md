@@ -1,4 +1,4 @@
-# jresolve-cli
+# jproject
 
 Command line tool for resolving dependencies on the JVM.
 
@@ -8,7 +8,7 @@ still make breaking changes if I have to. Expect rough edges.
 
 ## Installation
 
-There are [packages](https://github.com/bowbahdoe/jresolve-cli/actions)
+There are [packages](https://github.com/bowbahdoe/jproject/actions)
 generated in CI which can be added to your path. Click on the latest workflow run and there should be downloads at the
 bottom of the page.
 
@@ -20,7 +20,7 @@ For Mac and Linux you can install a version that depends on having Java 21+ inst
 with the following command.
 
 ```
-bash < <(curl -s  https://raw.githubusercontent.com/bowbahdoe/jresolve-cli/main/install)
+bash < <(curl -s  https://raw.githubusercontent.com/bowbahdoe/jproject/main/install)
 ```
 
 Very much a work in progress.
@@ -38,11 +38,11 @@ to its jar.
 
 
 ```
-jresolve pkg:maven/org.apache.commons/commons-collections4@4.4
+jproject pkg:maven/org.apache.commons/commons-collections4@4.4
 ```
 
 ```
-/Users/emccue/.jresolve/cache/https/repo1.maven.org/maven2/org/apache/commons/commons-collections4/4.4/commons-collections4-4.4.jar
+/Users/emccue/.jproject/cache/https/repo1.maven.org/maven2/org/apache/commons/commons-collections4/4.4/commons-collections4-4.4.jar
 ```
 
 ### Transitive Dependencies
@@ -51,11 +51,11 @@ For dependencies like `jdbi3-postgres`, which have dependencies of their own,
 you will get a path containing the jars of the entire dependency tree.
 
 ```
-jresolve pkg:maven/org.jdbi/jdbi3-postgres@3.41.3
+jproject pkg:maven/org.jdbi/jdbi3-postgres@3.41.3
 ```
 
 ```
-/Users/emccue/.jresolve/cache/https/repo1.maven.org/maven2/org/slf4j/slf4j-api/1.7.36/slf4j-api-1.7.36.jar:/Users/emccue/.jresolve/cache/https/repo1.maven.org/maven2/jakarta/annotation/jakarta.annotation-api/2.1.1/jakarta.annotation-api-2.1.1.jar:/Users/emccue/.jresolve/cache/https/repo1.maven.org/maven2/com/google/errorprone/error_prone_annotations/2.22.0/error_prone_annotations-2.22.0.jar:/Users/emccue/.jresolve/cache/https/repo1.maven.org/maven2/org/checkerframework/checker-qual/3.38.0/checker-qual-3.38.0.jar:/Users/emccue/.jresolve/cache/https/repo1.maven.org/maven2/io/leangen/geantyref/geantyref/1.3.14/geantyref-1.3.14.jar:/Users/emccue/.jresolve/cache/https/repo1.maven.org/maven2/org/jdbi/jdbi3-core/3.41.3/jdbi3-core-3.41.3.jar:/Users/emccue/.jresolve/cache/https/repo1.maven.org/maven2/org/jdbi/jdbi3-postgres/3.41.3/jdbi3-postgres-3.41.3.jar
+/Users/emccue/.jproject/cache/https/repo1.maven.org/maven2/org/slf4j/slf4j-api/1.7.36/slf4j-api-1.7.36.jar:/Users/emccue/.jproject/cache/https/repo1.maven.org/maven2/jakarta/annotation/jakarta.annotation-api/2.1.1/jakarta.annotation-api-2.1.1.jar:/Users/emccue/.jproject/cache/https/repo1.maven.org/maven2/com/google/errorprone/error_prone_annotations/2.22.0/error_prone_annotations-2.22.0.jar:/Users/emccue/.jproject/cache/https/repo1.maven.org/maven2/org/checkerframework/checker-qual/3.38.0/checker-qual-3.38.0.jar:/Users/emccue/.jproject/cache/https/repo1.maven.org/maven2/io/leangen/geantyref/geantyref/1.3.14/geantyref-1.3.14.jar:/Users/emccue/.jproject/cache/https/repo1.maven.org/maven2/org/jdbi/jdbi3-core/3.41.3/jdbi3-core-3.41.3.jar:/Users/emccue/.jproject/cache/https/repo1.maven.org/maven2/org/jdbi/jdbi3-postgres/3.41.3/jdbi3-postgres-3.41.3.jar
 ```
 
 ### Multiple dependencies
@@ -63,12 +63,12 @@ jresolve pkg:maven/org.jdbi/jdbi3-postgres@3.41.3
 If you have more than one dependency, you can provide them one after another on the command line.
 
 ```
-jresolve pkg:maven/org.apache.commons/commons-collections4@4.4 \
+jproject pkg:maven/org.apache.commons/commons-collections4@4.4 \
          pkg:maven/org.junit.jupiter/junit-jupiter-api@5.10.1
 ```
 
 ```
-/Users/emccue/.jresolve/cache/https/repo1.maven.org/maven2/org/junit/platform/junit-platform-commons/1.10.1/junit-platform-commons-1.10.1.jar:/Users/emccue/.jresolve/cache/https/repo1.maven.org/maven2/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/Users/emccue/.jresolve/cache/https/repo1.maven.org/maven2/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/Users/emccue/.jresolve/cache/https/repo1.maven.org/maven2/org/apache/commons/commons-collections4/4.4/commons-collections4-4.4.jar:/Users/emccue/.jresolve/cache/https/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-api/5.10.1/junit-jupiter-api-5.10.1.jar
+/Users/emccue/.jproject/cache/https/repo1.maven.org/maven2/org/junit/platform/junit-platform-commons/1.10.1/junit-platform-commons-1.10.1.jar:/Users/emccue/.jproject/cache/https/repo1.maven.org/maven2/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/Users/emccue/.jproject/cache/https/repo1.maven.org/maven2/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/Users/emccue/.jproject/cache/https/repo1.maven.org/maven2/org/apache/commons/commons-collections4/4.4/commons-collections4-4.4.jar:/Users/emccue/.jproject/cache/https/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-api/5.10.1/junit-jupiter-api-5.10.1.jar
 ```
 
 Or you can put them all into a file separated by newlines.
@@ -84,7 +84,7 @@ Then you can use that as an argfile. Put `@` before the filename and the args wi
 expand out.
 
 ```
-jresolve @deps
+jproject @deps
 ```
 
 ### Multiple sets of dependencies
@@ -95,14 +95,14 @@ your project's lifecycle, you can use multiple argfiles for them.
 #### Compile Time
 
 ```
-jresolve @deps/compile
+jproject @deps/compile
 ```
 
 #### Run Time
 
 (includes both compile and runtime dependencies)
 ```
-jresolve @deps/compile @deps/runtime
+jproject @deps/compile @deps/runtime
 ```
 
 ### Usage from JVM Tools
@@ -113,13 +113,13 @@ The first is that, if your shell supports it, you can use the output of the tool
 with an invocation.
 
 ```
-java --class-path $(jresolve @deps) src/Main.java
+java --class-path $(jproject @deps) src/Main.java
 ```
 
 The more portable option is to run the tool and put the results into a file.
 
 ```
-jresolve --output-file build/argfiles/runtime @deps/compile @deps/runtime
+jproject --output-file build/argfiles/runtime @deps/compile @deps/runtime
 ```
 
 And then use the argfile when invoking the tool.
@@ -140,11 +140,11 @@ The first is to include it as-is. Anything that cannot be parsed as a URL will b
 to the final path.
 
 ```
-jresolve pkg:maven/org.apache.commons/commons-collections4@4.4 some/other/path
+jproject pkg:maven/org.apache.commons/commons-collections4@4.4 some/other/path
 ```
 
 ```
-/Users/emccue/.jresolve/cache/https/repo1.maven.org/maven2/org/apache/commons/commons-collections4/4.4/commons-collections4-4.4.jar:some/other/path
+/Users/emccue/.jproject/cache/https/repo1.maven.org/maven2/org/apache/commons/commons-collections4/4.4/commons-collections4-4.4.jar:some/other/path
 ```
 
 
@@ -152,11 +152,11 @@ The second is to supply it as an argument with a `file:///` url. Keep in mind th
 are always absolute paths and as such likely won't be portable to other machines.
 
 ```
-jresolve pkg:maven/org.apache.commons/commons-collections4@4.4 file:///an/absolute/path
+jproject pkg:maven/org.apache.commons/commons-collections4@4.4 file:///an/absolute/path
 ```
 
 ```
-/Users/emccue/.jresolve/cache/https/repo1.maven.org/maven2/org/apache/commons/commons-collections4/4.4/commons-collections4-4.4.jar:/an/absolute/path
+/Users/emccue/.jproject/cache/https/repo1.maven.org/maven2/org/apache/commons/commons-collections4/4.4/commons-collections4-4.4.jar:/an/absolute/path
 ```
 
 
@@ -169,13 +169,13 @@ There is no support for, and no plans to support, files hosted via other protoco
 or to support getting files behind urls which require authentication.
 
 ```
-jresolve https://piston-data.mojang.com/v1/objects/5b868151bd02b41319f54c8d4061b8cae84e665c/server.jar
+jproject https://piston-data.mojang.com/v1/objects/5b868151bd02b41319f54c8d4061b8cae84e665c/server.jar
 ```
 
 ### Usage to make a project
 
 If you are curious what it would look like to make an actual project using this
-and other JVM tools instead of a full build system, there is a demo of that [here](https://github.com/bowbahdoe/jresolve-example-simple/tree/main).
+and other JVM tools instead of a full build system, there is a demo of that [here](https://github.com/bowbahdoe/jproject-example-simple/tree/main).
 
 Getting IDEs to recognize what dependencies are made available is unsolved, but definitely solvable.
 
@@ -194,7 +194,7 @@ If you make a json file like this
 You can supply it to the tool
 
 ```
-jresolve --maven-repositories-file repositories.json @deps
+jproject --maven-repositories-file repositories.json @deps
 ```
 
 And include the repository to use on a specific coordinate.

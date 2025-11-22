@@ -1,14 +1,14 @@
-package dev.mccue.resolve.cli;
+package dev.mccue.project;
 
 import picocli.CommandLine;
 
 import java.io.PrintWriter;
 import java.util.spi.ToolProvider;
 
-public final class JResolveToolProvider implements ToolProvider {
+public final class JProjectToolProvider implements ToolProvider {
     @Override
     public String name() {
-        return "jresolve";
+        return "jproject";
     }
 
     @Override

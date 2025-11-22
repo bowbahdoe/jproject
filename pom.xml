@@ -5,19 +5,18 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>dev.mccue</groupId>
-    <artifactId>jresolve-cli</artifactId>
-    <version>2025.02.15</version>
+    <artifactId>project</artifactId>
+    <version>2025.11.21</version>
 
     <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jdk.version>21.0.3</jdk.version>
     </properties>
 
-    <name>jresolve-cli</name>
+    <name>jproject</name>
     <description>CLI for resolving dependencies on the JVM</description>
-    <url>https://github.com/bowbahdoe/jresolve-cli</url>
+    <url>https://github.com/bowbahdoe/jproject</url>
 
     <developers>
         <developer>
@@ -37,9 +36,9 @@
     </licenses>
 
     <scm>
-        <connection>scm:git:git://github.com/bowbahdoe/jresolve-cli.git</connection>
-        <developerConnection>scm:git:ssh://github.com:bowbahdoe/jresolve-cli.git</developerConnection>
-        <url>http://github.com/bowbahdoe/jresolve-cli/tree/main</url>
+        <connection>scm:git:git://github.com/bowbahdoe/jproject.git</connection>
+        <developerConnection>scm:git:ssh://github.com:bowbahdoe/jproject.git</developerConnection>
+        <url>http://github.com/bowbahdoe/jproject/tree/main</url>
     </scm>
 
 
@@ -63,11 +62,6 @@
             <groupId>dev.mccue</groupId>
             <artifactId>purl</artifactId>
             <version>2023.11.07</version>
-        </dependency>
-        <dependency>
-            <groupId>org.tomlj</groupId>
-            <artifactId>tomlj</artifactId>
-            <version>1.1.1</version>
         </dependency>
     </dependencies>
 
@@ -155,7 +149,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-shade-plugin</artifactId>
-                        <version>3.5.3</version>
+                        <version>3.6.1</version>
                         <executions>
                             <execution>
                                 <phase>package</phase>
@@ -165,25 +159,6 @@
                             </execution>
                         </executions>
                         <configuration>
-                            <relocations>
-                                <relocation>
-                                    <pattern>picocli</pattern>
-                                    <shadedPattern>dev.mccue.resolve.uber.picocli</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.tomlj</pattern>
-                                    <shadedPattern>dev.mccue.resolve.uber.tomlj</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>dev.mccue</pattern>
-                                    <shadedPattern>dev.mccue.resolve.uber</shadedPattern>
-                                </relocation>
-                            </relocations>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>dev.mccue.resolve.uber.resolve.cli.CliMain</mainClass>
-                                </transformer>
-                            </transformers>
                             <filters>
                                 <filter>
                                     <artifact>*:*</artifact>
@@ -216,6 +191,7 @@
                                         <exclude>META-INF/MANIFEST.MF</exclude>
                                     </excludes>
                                 </filter>
+
                                 <filter>
                                     <artifact>org.tomlj:tomlj</artifact>
                                     <excludes>
@@ -226,31 +202,6 @@
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                             <shadedClassifierName>uber</shadedClassifierName>
                         </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.moditect</groupId>
-                        <artifactId>moditect-maven-plugin</artifactId>
-                        <version>1.2.1.Final</version>
-                        <executions>
-                            <execution>
-                                <id>add-module-info</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>add-module-info</goal>
-                                </goals>
-                                <configuration>
-                                    <overwriteExistingFiles>true</overwriteExistingFiles>
-                                    <modules>
-                                        <module>
-                                            <file>target/jresolve-cli-2025.02.15-uber.jar</file>
-                                            <moduleInfoFile>
-                                                src/main/uberjar/module-info.java
-                                            </moduleInfoFile>
-                                        </module>
-                                    </modules>
-                                </configuration>
-                            </execution>
-                        </executions>
                     </plugin>
                 </plugins>
             </build>
@@ -264,8 +215,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <source>17</source>
-                    <target>17</target>
+                    <source>25</source>
+                    <target>25</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -275,7 +226,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>dev.mccue.resolve.cli.CliMain</mainClass>
+                            <mainClass>dev.mccue.project.CliMain</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
