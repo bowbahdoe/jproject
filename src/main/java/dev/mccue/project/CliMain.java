@@ -127,13 +127,19 @@ public final class CliMain {
             description = "Create a new Java project"
     )
     public int new_(
-            File destination
+            @CommandLine.Parameters(
+                    arity = "1",
+                    paramLabel = "<destination>",
+                    description = "The folder to create a new project in."
+            ) File destination
     ) throws Exception {
         if (Files.exists(destination.toPath())) {
             err.println("destination `" + destination.toPath() + "` already exists");
             err.flush();
             return 1;
         }
+
+        Files.createDirectories(destination.toPath());
 
         Files.writeString(
                 Path.of(destination.toString(), "jproject.xml"),
@@ -167,6 +173,20 @@ public final class CliMain {
 
 
         return 0;
+    }
+
+    @CommandLine.Command(
+            name = "install",
+            description = "Alias for download"
+    )
+    public int install(
+            @CommandLine.Option(
+                    names = {"--cache-path"},
+                    description = "Path to use for caching the files fetched during dependency resolution"
+            )
+            File cachePath
+    ) throws Exception {
+        return download(cachePath);
     }
 
     @CommandLine.Command(
@@ -552,6 +572,7 @@ public final class CliMain {
         return 0;
     }
 
+    /*
     @CommandLine.Command(
             name = "enrich-pom",
             description = "Enriches the given pom.xml file with the result of dependency resolution."
@@ -581,5 +602,5 @@ public final class CliMain {
         err.println("TODO");
         err.flush();
         return 0;
-    }
+    } */
 }

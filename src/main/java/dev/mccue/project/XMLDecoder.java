@@ -1,5 +1,6 @@
 package dev.mccue.project;
 
+import javax.xml.XMLConstants;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.SequencedCollection;
@@ -128,7 +129,7 @@ interface XMLDecoder<T> {
 
         var children = node.children();
         if (children.isEmpty()) {
-            return null;
+            return "";
         }
         else if (children.size() > 1) {
             throw new XMLDecodeException("More than one child");
@@ -139,6 +140,10 @@ interface XMLDecoder<T> {
         else {
             return text.value();
         }
+    }
+
+    static String singleTextChildStripped(XML xml) {
+        return singleTextChild(xml).strip();
     }
 
     static XML.Node nodeStripBlankTextChildren(XML xml) {

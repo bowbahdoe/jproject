@@ -58,44 +58,44 @@ record Project(
                     .singleChildNamed(
                             dependency,
                             "groupId",
-                            XMLDecoder::singleTextChild
+                            XMLDecoder::singleTextChildStripped
                     );
             var artifactId = XMLDecoder
                     .singleChildNamed(
                             dependency,
                             "artifactId",
-                            XMLDecoder::singleTextChild
+                            XMLDecoder::singleTextChildStripped
                     );
 
             var version = XMLDecoder
                     .singleChildNamed(
                             dependency,
                             "version",
-                            XMLDecoder::singleTextChild
+                            XMLDecoder::singleTextChildStripped
                     );
 
             var path = XMLDecoder.singleChildNamed(
                     dependency,
                     "path",
-                    XMLDecoder::singleTextChild
+                    XMLDecoder::singleTextChildStripped
             );
 
             var url = XMLDecoder.singleChildNamed(
                     dependency,
                     "url",
-                    XMLDecoder::singleTextChild
+                    XMLDecoder::singleTextChildStripped
             );
 
             var usage = XMLDecoder.singleChildNamed(
                     dependency,
                     "usage",
-                    XMLDecoder::singleTextChild
+                    XMLDecoder::singleTextChildStripped
             );
 
             var repository = XMLDecoder.singleChildNamed(
                     dependency,
                     "repository",
-                    XMLDecoder::singleTextChild
+                    XMLDecoder::singleTextChildStripped
             );
 
             var dependencySets = XMLDecoder.singleChildNamed(
@@ -152,7 +152,7 @@ record Project(
             var extends_ = XMLDecoder.singleChildNamed(
                     xml,
                     "extends",
-                    XMLDecoder::singleTextChild
+                    XMLDecoder::singleTextChildStripped
             );
             return new DependencySet(dependencySetName, extends_);
         }
@@ -170,7 +170,7 @@ record Project(
                     .singleChildNamed(
                             xml,
                             "url",
-                            XMLDecoder::singleTextChild
+                            XMLDecoder::singleTextChildStripped
                     );
 
             var authentication = XMLDecoder
@@ -191,13 +191,13 @@ record Project(
                         .singleChildNamed(
                                 xml,
                                 "username",
-                                XMLDecoder::singleTextChild
+                                XMLDecoder::singleTextChildStripped
                         );
                 var password = XMLDecoder
                         .singleChildNamed(
                                 xml,
                                 "authentication",
-                                XMLDecoder::singleTextChild
+                                XMLDecoder::singleTextChildStripped
                         );
                 if (username == null || password == null) {
                     throw new RuntimeException("Authentication must specify both username and password");
@@ -332,7 +332,7 @@ record Project(
                 .singleChildNamed(
                         xml,
                         "defaultUsage",
-                        XMLDecoder::singleTextChild
+                        XMLDecoder::singleTextChildStripped
                 );
 
         var dependenciesList = new ArrayList<Dependency>();

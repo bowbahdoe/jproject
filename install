@@ -9,7 +9,7 @@ download_dir=""
 dev_build=""
 
 print_help() {
-    echo "Installs latest (or specific) version of jresolve. Installation directory defaults to /usr/local/bin."
+    echo "Installs latest (or specific) version of jproject. Installation directory defaults to /usr/local/bin."
     echo -e
     echo "Usage:"
     echo "install [--dir <dir>] [--download-dir <download-dir>] [--version <version>]"
@@ -58,33 +58,33 @@ fi
 
 if [[ "$version" == "" ]]; then
     if [[ "$dev_build" == "true" ]]; then
-        version="$(curl -sL https://raw.githubusercontent.com/bowbahdoe/jresolve-cli/main/JRESOLVE_VERSION)"
+        version="$(curl -sL https://raw.githubusercontent.com/bowbahdoe/jproject/main/JPROJECT_VERSION)"
     else
-        version="$(curl -sL https://raw.githubusercontent.com/bowbahdoe/jresolve-cli/main/JRESOLVE_RELEASED_VERSION)"
+        version="$(curl -sL https://raw.githubusercontent.com/bowbahdoe/jproject/main/JPROJECT_RELEASED_VERSION)"
     fi
 fi
 
-repo="jresolve-cli"
+repo="jproject"
 
-download_url="https://github.com/bowbahdoe/$repo/releases/download/v$version/jresolve.jar"
+download_url="https://github.com/bowbahdoe/$repo/releases/download/v$version/jproject.jar"
 
 # Running this part in a subshell so when it finishes we go back to the previous directory
 mkdir -p "$download_dir" && (
     cd "$download_dir"
     echo -e "Downloading $download_url to $download_dir"
-    curl -o "jresolve.jar" -sL "$download_url"
+    curl -o "jproject.jar" -sL "$download_url"
 )
 
 if [[ "$download_dir" != "$install_dir" ]]
 then
     mkdir -p "$install_dir"
-    if [ -f "$install_dir/jresolve" ]; then
-        echo "Moving $install_dir/jresolve to $install_dir/jresolve.old"
-        mv -f "$install_dir/jresolve" "$install_dir/jresolve.old"
+    if [ -f "$install_dir/jproject" ]; then
+        echo "Moving $install_dir/jproject to $install_dir/jproject.old"
+        mv -f "$install_dir/jproject" "$install_dir/jproject.old"
     fi
-    echo "#!/usr/bin/env -S java -jar" > "$install_dir/jresolve"
-    cat  "$download_dir/jresolve.jar" >> "$install_dir/jresolve"
-    chmod +x "$install_dir/jresolve"
+    echo "#!/usr/bin/env -S java -jar" > "$install_dir/jproject"
+    cat  "$download_dir/jproject.jar" >> "$install_dir/jproject"
+    chmod +x "$install_dir/jproject"
 fi
 
-echo "Successfully installed jresolve in $install_dir"
+echo "Successfully installed jproject in $install_dir"
