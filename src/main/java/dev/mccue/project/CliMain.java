@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 @CommandLine.Command(
         name = "jproject",
         mixinStandardHelpOptions = true,
-        version = "2025.11.21",
+        version = "2025.11.24",
         description = "Manages dependencies for the JVM projects."
 )
 public final class CliMain {

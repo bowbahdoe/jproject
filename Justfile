@@ -7,7 +7,7 @@ make_reflect_config:
     ./mvnw -Ppicocli-codegen dependency:copy-dependencies
     ./mvnw package
     java \
-        --class-path target/dependency/picocli-codegen-4.7.5.jar:target/jproject-2025.11.21.jar:target/dependency/json-2024.11.20.jar:target/dependency/picocli-4.7.5.jar:target/dependency/purl-2023.11.07.jar:target/dependency/resolve-2025.02.14.1.jar \
+        --class-path target/dependency/picocli-codegen-4.7.5.jar:target/jproject-2025.11.24.jar:target/dependency/json-2024.11.20.jar:target/dependency/picocli-4.7.5.jar:target/dependency/purl-2023.11.07.jar:target/dependency/resolve-2025.02.14.1.jar \
         picocli.codegen.aot.graalvm.ReflectionConfigGenerator \
         dev.mccue.project.CliMain > reflect.json
 
@@ -19,7 +19,7 @@ exe static='':
     native-image \
         --class-path $(./join.sh) \
         -H:+UnlockExperimentalVMOptions -H:ReflectionConfigurationFiles=reflect.json -H:+ReportUnsupportedElementsAtRuntime \
-        -jar target/jproject-2025.11.21.jar \
+        -jar target/jproject-2025.11.24.jar \
         {{static}} jproject
 
 exe_windows:
