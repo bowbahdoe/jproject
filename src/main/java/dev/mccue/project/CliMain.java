@@ -428,15 +428,17 @@ public final class CliMain {
                         var path = libToPath.values()
                                 .stream()
                                 .map(Path::toString)
+                                .map(p -> "\"" + p + "\"")
                                 .collect(Collectors.joining(File.pathSeparator));
 
                         boolean isWin = System
-                                .getenv("os.name")
+                                .getProperty("os.name")
                                 .toLowerCase(Locale.ENGLISH)
                                 .contains("win");
                         if (isWin) {
-                            path = path.replace(" ", "\\ ")
-                                    .replace("\\", "\\\\");
+                            path = path
+                                    .replace("\\", "\\\\")
+                                    .replace(" ", "\\ ");
                         }
                         if (usageValue.endsWith(":") || usageValue.endsWith("=")) {
                             args.add(usageValue + path);
