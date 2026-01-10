@@ -429,6 +429,15 @@ public final class CliMain {
                                 .stream()
                                 .map(Path::toString)
                                 .collect(Collectors.joining(File.pathSeparator));
+
+                        boolean isWin = System
+                                .getenv("os.name")
+                                .toLowerCase(Locale.ENGLISH)
+                                .contains("win");
+                        if (isWin) {
+                            path = path.replace(" ", "\\ ")
+                                    .replace("\\", "\\\\");
+                        }
                         if (usageValue.endsWith(":") || usageValue.endsWith("=")) {
                             args.add(usageValue + path);
                         } else {
